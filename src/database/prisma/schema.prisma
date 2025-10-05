@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}
+
+model Exam {
+  id               Int                @id @default(autoincrement())
+  name             String
+  duration         Int
+  ExamQuestion     ExamQuestion[]
+  StudentExamScore StudentExamScore[]
+}
+
+model Question {
+  id            Int             @id @default(autoincrement())
+  text          String
+  answers       String[]
+  type          QuestionType
+  scoring       QuestionScoring
+  imageUrl      String?
+  correctAnswer String
+  ExamQuestion  ExamQuestion[]
+}
+
+model ExamQuestion {
+  id                        Int                         @id @default(autoincrement())
+  exam                      Exam                        @relation(fields: [examId], references: [id])
+  examId                    Int
+  question                  Question                    @relation(fields: [questionId], references: [id])
+  questionId                Int
+  StudentExamQuestionAnswer StudentExamQuestionAnswer[]
+}
+
+model Student {
+  id                        Int                         @id @default(autoincrement())
+  name                      String
+  age                       Int
+  StudentExamScore          StudentExamScore[]
+  StudentExamQuestionAnswer StudentExamQuestionAnswer[]
+}
+
+model StudentExamQuestionAnswer {
+  id             Int          @id @default(autoincrement())
+  examQuestionId Int
+  examQuestion   ExamQuestion @relation(fields: [examQuestionId], references: [id])
+  answerText     String
+  studentId      Int
+  student        Student      @relation(fields: [studentId], references: [id])
+
+  @@unique([examQuestionId, studentId], name: "answerUniqueId")
+}
+
+model StudentExamScore {
+  id         Int     @id @default(autoincrement())
+  examId     Int
+  exam       Exam    @relation(fields: [examId], references: [id])
+  studentId  Int
+  student    Student @relation(fields: [studentId], references: [id])
+  score      Int
+  totalScore Int
+
+  @@unique([examId, studentId], name: "scoreUniqueId")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  INPUT_TEXT
+}
+
+enum QuestionScoring {
+  AUTOMATIC
+  MANUAL
+}
